@@ -1,216 +1,2640 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "Monitor Platform API",
+    "version": "1.0.0",
+    "summary": "Programmatic API for uptime monitoring, incidents, alerting, organization management, and auth.",
+    "description": "This document covers the public `/api/v1` surface exposed by the Monitor platform. Organization resource routes support either the `auth-token` session cookie or an organization-scoped API key where documented."
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "http://localhost:9100",
+      "description": "Current environment"
     }
   ],
-  "security": [
+  "tags": [
     {
-      "bearerAuth": []
+      "name": "Auth",
+      "description": "User registration and authentication flows."
+    },
+    {
+      "name": "Organizations",
+      "description": "Organization discovery and switching."
+    },
+    {
+      "name": "Monitors",
+      "description": "Uptime monitor CRUD and manual checks."
+    },
+    {
+      "name": "Incidents",
+      "description": "Incident history for an organization."
+    },
+    {
+      "name": "Alert Channels",
+      "description": "Notification channel management."
+    },
+    {
+      "name": "Members",
+      "description": "Organization membership management."
+    },
+    {
+      "name": "Status Page",
+      "description": "Public status page configuration."
+    },
+    {
+      "name": "Invites",
+      "description": "Organization invite token access."
+    },
+    {
+      "name": "API Keys",
+      "description": "Organization API key lifecycle management."
+    },
+    {
+      "name": "User",
+      "description": "Referral and user-specific resources."
+    },
+    {
+      "name": "PayID",
+      "description": "PayID OAuth and KYC integration routes."
+    },
+    {
+      "name": "System",
+      "description": "Internal system automation and error reporting."
     }
   ],
-  "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
+  "components": {
+    "securitySchemes": {
+      "sessionCookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "auth-token",
+        "description": "Signed session cookie returned by the platform auth flows."
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Organization-scoped API key created through the API keys endpoints."
+      },
+      "bearerApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Alternative form for organization API keys using the Authorization header."
+      },
+      "authTokenHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "auth-token",
+        "description": "Header-based auth used by PayID integration routes."
+      },
+      "cronSecretHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-monitor-cron-secret",
+        "description": "Shared secret for internal cron execution."
+      },
+      "cronBearerSecret": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Alternative bearer form for the cron shared secret."
+      }
+    },
+    "schemas": {
+      "GenericSuccess": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "default": false
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
             }
           }
+        }
+      },
+      "OrganizationSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member",
+              "viewer"
+            ]
+          }
+        }
+      },
+      "SessionUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "picture": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "payTag": {
+            "type": "string",
+            "nullable": true
+          },
+          "referredBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "phoneVerified": {
+            "type": "boolean"
+          },
+          "kycVerified": {
+            "type": "boolean"
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationSummary"
+            }
+          },
+          "activeOrg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Monitor": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "checkType": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "expectedStatus": {
+            "type": "number"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "bodyContains": {
+            "type": "string",
+            "nullable": true
+          },
+          "bodyNotContains": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseFormat": {
+            "type": "string"
+          },
+          "responseAssertionType": {
+            "type": "string"
+          },
+          "responseAssertionPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseAssertionValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "intervalMinutes": {
+            "type": "number"
+          },
+          "timeoutMs": {
+            "type": "number"
+          },
+          "degradedThresholdMs": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "notifyChannelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextCheckAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "MonitorInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "url"
         ],
-        "responses": {
-          "200": {
-            "description": "Plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "checkType": {
+            "type": "string",
+            "default": "endpoint"
+          },
+          "method": {
+            "type": "string",
+            "default": "GET"
+          },
+          "expectedStatus": {
+            "type": "number",
+            "default": 200
+          },
+          "headers": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "bodyContains": {
+            "type": "string"
+          },
+          "bodyNotContains": {
+            "type": "string"
+          },
+          "responseFormat": {
+            "type": "string"
+          },
+          "responseAssertionType": {
+            "type": "string"
+          },
+          "responseAssertionPath": {
+            "type": "string"
+          },
+          "responseAssertionValue": {
+            "type": "string"
+          },
+          "intervalMinutes": {
+            "type": "number",
+            "default": 5
+          },
+          "timeoutMs": {
+            "type": "number",
+            "default": 10000
+          },
+          "degradedThresholdMs": {
+            "type": "number",
+            "default": 3000
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": false
+          },
+          "notifyChannelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MonitorCheckResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "responseTimeMs": {
+            "type": "number",
+            "nullable": true
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "statusCode": {
+            "type": "number",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AlertChannel": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AlertChannelInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "Incident": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string"
+          },
+          "monitorId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member",
+              "viewer"
+            ]
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "firstName": {
+                "type": "string",
+                "nullable": true
+              },
+              "lastName": {
+                "type": "string",
+                "nullable": true
+              },
+              "picture": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "StatusPageSettings": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "showHistory": {
+            "type": "boolean"
+          },
+          "showUptime": {
+            "type": "boolean"
+          },
+          "showIncidents": {
+            "type": "boolean"
+          },
+          "showMonitors": {
+            "type": "boolean"
+          },
+          "publicMonitorIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "accent": {
+                "type": "string",
+                "nullable": true
+              },
+              "background": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "StatusPageInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "showHistory": {
+            "type": "boolean"
+          },
+          "showUptime": {
+            "type": "boolean"
+          },
+          "showIncidents": {
+            "type": "boolean"
+          },
+          "showMonitors": {
+            "type": "boolean"
+          },
+          "publicMonitorIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApiKeySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ApiKeyInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiKeyCreateResult": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "$ref": "#/components/schemas/ApiKeySummary"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Plaintext secret returned only once at creation time."
+          }
+        }
+      },
+      "Referral": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "payTag": {
+            "type": "string",
+            "nullable": true
+          },
+          "picture": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PayIdUserInfo": {
+        "type": "object",
+        "properties": {
+          "payidSub": {
+            "type": "string"
+          },
+          "payTag": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "givenName": {
+            "type": "string",
+            "nullable": true
+          },
+          "familyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "picture": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "kycVerified": {
+            "type": "boolean"
+          },
+          "verificationLevel": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "KycStatus": {
+        "type": "object",
+        "properties": {
+          "hasSession": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isConnected": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "kycStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "kycVerified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "verificationLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "shareableUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "KycVerifyInput": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "dateOfBirth",
+          "country",
+          "identityNumbers"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "country": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "street2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              }
+            }
+          },
+          "identityNumbers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ErrorReportInput": {
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Log in with email and password",
+        "operationId": "authLogin",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
                   }
                 }
               }
             }
-          },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
         },
         "responses": {
           "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
+            "description": "Login successful"
           },
           "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Log out the current session",
+        "operationId": "authLogout",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link/request": {
+      "post": {
+        "summary": "Request an email magic link",
+        "operationId": "authMagicLinkRequest",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "shouldCreate": {
+                    "type": "boolean"
+                  },
+                  "returnUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Magic link requested"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link/verify": {
+      "get": {
+        "summary": "Verify a magic link and establish a session",
+        "operationId": "authMagicLinkVerify",
+        "tags": [
+          "Auth"
+        ],
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
+            "in": "query",
+            "name": "email",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "returnUrl",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
+          "302": {
+            "description": "Redirects after verification"
           },
           "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Invalid link"
           }
         }
       }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    },
+    "/api/v1/auth/otp/request": {
       "post": {
-        "description": "Information about a new plant added to the store",
+        "summary": "Request a one-time password over email",
+        "operationId": "authOtpRequest",
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
-          "description": "Plant added to the store",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "shouldCreate": {
+                    "type": "boolean"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+            "description": "OTP requested"
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
     },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "summary": "Verify a one-time password",
+        "operationId": "authOtpVerify",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "otp"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "returnUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register a new account",
+        "operationId": "authRegister",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "referralCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "409": {
+            "description": "User already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "summary": "Fetch the current authenticated session",
+        "operationId": "authSession",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session details"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/alert-channels/{channelId}": {
+      "patch": {
+        "summary": "Update an alert channel",
+        "operationId": "updateAlertChannel",
+        "tags": [
+          "Alert Channels"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "channelId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertChannelInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert channel updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an alert channel",
+        "operationId": "deleteAlertChannel",
+        "tags": [
+          "Alert Channels"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "channelId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert channel deleted"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/alert-channels/{channelId}/test": {
+      "post": {
+        "summary": "Test an alert channel",
+        "operationId": "testAlertChannel",
+        "tags": [
+          "Alert Channels"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "channelId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test alert sent successfully"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/alert-channels": {
+      "get": {
+        "summary": "List alert channels",
+        "operationId": "listAlertChannels",
+        "tags": [
+          "Alert Channels"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert channel collection"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an alert channel",
+        "operationId": "createAlertChannel",
+        "tags": [
+          "Alert Channels"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertChannelInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert channel created"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/api-keys/{keyId}": {
+      "delete": {
+        "summary": "Revoke an organization API key",
+        "operationId": "revokeApiKey",
+        "tags": [
+          "API Keys"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "keyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key revoked"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/api-keys": {
+      "get": {
+        "summary": "List organization API keys",
+        "operationId": "listApiKeys",
+        "tags": [
+          "API Keys"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API keys loaded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an organization API key",
+        "operationId": "createApiKey",
+        "tags": [
+          "API Keys"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API key created"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/incidents": {
+      "get": {
+        "summary": "List incidents for an organization",
+        "operationId": "listOrgIncidents",
+        "tags": [
+          "Incidents"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident collection"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/invite": {
+      "get": {
+        "summary": "Get the active organization invite",
+        "operationId": "getOrganizationInvite",
+        "tags": [
+          "Invites"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite loaded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or rotate an organization invite",
+        "operationId": "createOrganizationInvite",
+        "tags": [
+          "Invites"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite created"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/members": {
+      "get": {
+        "summary": "List organization members",
+        "operationId": "listOrgMembers",
+        "tags": [
+          "Members"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member collection"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a member role",
+        "operationId": "updateOrgMemberRole",
+        "tags": [
+          "Members"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "role"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "owner",
+                      "admin",
+                      "member",
+                      "viewer"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member updated"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/monitors/{monitorId}": {
+      "post": {
+        "summary": "Run a monitor check immediately",
+        "operationId": "runMonitorCheck",
+        "tags": [
+          "Monitors"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "monitorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitor check completed"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a monitor",
+        "operationId": "updateMonitor",
+        "tags": [
+          "Monitors"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "monitorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Monitor updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a monitor",
+        "operationId": "deleteMonitor",
+        "tags": [
+          "Monitors"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "monitorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitor deleted"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/monitors": {
+      "get": {
+        "summary": "List monitors in an organization",
+        "operationId": "listOrgMonitors",
+        "tags": [
+          "Monitors"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitor collection"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new monitor",
+        "operationId": "createOrgMonitor",
+        "tags": [
+          "Monitors"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Monitor created"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/status-page": {
+      "patch": {
+        "summary": "Update legacy status page settings",
+        "operationId": "updateStatusPage",
+        "tags": [
+          "Status Page"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusPageSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status page updated"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/status-pages/{statusPageId}": {
+      "patch": {
+        "summary": "Update a status page",
+        "operationId": "updateStatusPageV2",
+        "tags": [
+          "Status Page"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "statusPageId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusPageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status page updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a status page",
+        "operationId": "deleteStatusPage",
+        "tags": [
+          "Status Page"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "statusPageId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status page deleted"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/status-pages": {
+      "get": {
+        "summary": "List organization status pages",
+        "operationId": "listStatusPages",
+        "tags": [
+          "Status Page"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status pages loaded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a status page",
+        "operationId": "createStatusPage",
+        "tags": [
+          "Status Page"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusPageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status page created"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/active": {
+      "post": {
+        "summary": "Set the active organization in the session",
+        "operationId": "setActiveOrganization",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "orgSlug"
+                ],
+                "properties": {
+                  "orgSlug": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Active organization updated"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/join/{inviteToken}": {
+      "post": {
+        "summary": "Join an organization with an invite token",
+        "operationId": "joinOrganization",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inviteToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization joined"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "404": {
+            "description": "Invite not found"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs": {
+      "get": {
+        "summary": "List organizations for the current user",
+        "operationId": "listOrganizations",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organizations loaded"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/kyc/retry/{sessionId}": {
+      "post": {
+        "summary": "Retry a KYC verification session",
+        "operationId": "retryPayIdKycSession",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retry initiated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/kyc/status/{sessionId}": {
+      "get": {
+        "summary": "Get a specific KYC session status",
+        "operationId": "getPayIdKycSessionStatus",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session status loaded"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/kyc/status": {
+      "get": {
+        "summary": "Get the current user's KYC status",
+        "operationId": "getPayIdKycStatus",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "KYC status loaded"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/kyc/verify": {
+      "post": {
+        "summary": "Start or submit a KYC verification flow",
+        "operationId": "verifyPayIdKyc",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KycVerifyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification initiated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/oauth/initiate": {
+      "post": {
+        "summary": "Start the PayID OAuth flow",
+        "operationId": "initiatePayIdOAuth",
+        "tags": [
+          "PayID"
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth initiation successful"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/oauth/login/magic-link/request": {
+      "post": {
+        "summary": "Request a PayID OAuth magic link",
+        "operationId": "requestPayIdOauthMagicLink",
+        "tags": [
+          "PayID"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "redirectUri": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Magic link requested"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/oauth/token/refresh": {
+      "post": {
+        "summary": "Refresh a PayID OAuth token",
+        "operationId": "refreshPayIdOauthToken",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/payid/userinfo": {
+      "get": {
+        "summary": "Fetch PayID user information",
+        "operationId": "getPayIdUserInfo",
+        "tags": [
+          "PayID"
+        ],
+        "security": [
+          {
+            "authTokenHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PayID user info loaded"
+          },
+          "401": {
+            "description": "Missing or invalid auth token"
+          }
+        }
+      }
+    },
+    "/api/v1/system/cron/uptime": {
+      "post": {
+        "summary": "Run due monitor checks",
+        "operationId": "runDueMonitorChecks",
+        "tags": [
+          "System"
+        ],
+        "security": [
+          {
+            "cronSecretHeader": []
+          },
+          {
+            "cronBearerSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uptime checks processed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/system/report-error": {
+      "post": {
+        "summary": "Report a client-side error to the backend",
+        "operationId": "reportClientError",
+        "tags": [
+          "System"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorReportInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Error reported"
+          }
+        }
+      }
+    },
+    "/api/v1/user/referrals": {
+      "get": {
+        "summary": "List referrals for the current user",
+        "operationId": "listUserReferrals",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral list loaded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Save a referral code or relationship for the current user",
+        "operationId": "saveUserReferral",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "referralCode": {
+                    "type": "string"
+                  },
+                  "referredBy": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Referral saved"
+          }
+        }
       }
     }
   }
