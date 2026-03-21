@@ -1631,6 +1631,157 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/custom-domains/{hostname}": {
+      "delete": {
+        "summary": "Remove a custom domain",
+        "operationId": "removeCustomDomain",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "hostname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Domain removed"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/custom-domains/{hostname}/verify": {
+      "post": {
+        "summary": "Verify custom domain ownership",
+        "operationId": "verifyCustomDomain",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "hostname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification result"
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/custom-domains": {
+      "get": {
+        "summary": "List organization custom domains",
+        "operationId": "listCustomDomains",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Custom domains collection"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a custom domain",
+        "operationId": "addCustomDomain",
+        "tags": [
+          "Organizations"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "hostname"
+                ],
+                "properties": {
+                  "hostname": {
+                    "type": "string"
+                  },
+                  "statusPageId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Domain added"
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/incidents/{incidentId}": {
       "patch": {
         "summary": "Update an incident",
@@ -2827,6 +2978,60 @@
         "responses": {
           "200": {
             "description": "Error reported"
+          }
+        }
+      }
+    },
+    "/api/v1/system/resolve-domain": {
+      "get": {
+        "summary": "Resolve a custom domain to a status page slug",
+        "description": "Looks up a verified custom domain and returns the associated status page slug for routing purposes.",
+        "tags": [
+          "System"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "hostname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The custom domain hostname to resolve (e.g. status.example.com)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Domain resolved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "statusPageSlug": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hostname query parameter is missing"
+          },
+          "404": {
+            "description": "Domain not found or not verified"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
