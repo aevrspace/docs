@@ -1,0 +1,70 @@
+---
+title: "Monitors"
+description: "Configure and manage uptime checks for your services"
+---
+
+Monitors are the core of the Monitor platform. Each monitor periodically checks a target URL and records the result — status, response time, and any assertion failures.
+
+## Check types
+
+| Type | Description |
+|---|---|
+| **Endpoint** | HTTP/HTTPS request; validates status code and optional body assertions. |
+| **Health** | Checks a JSON health endpoint, e.g. `{"status":"ok"}`. |
+| **Ping** | ICMP or TCP reachability check — no HTTP required. |
+| **Keyword** | Validates that the response body contains (or does not contain) a specific string. |
+| **SSL** | Checks TLS certificate validity and expiry. |
+| **Push** | A passive monitor; your service calls a heartbeat URL. Monitor raises an alert if no ping arrives within the configured TTL. |
+
+## Creating a monitor
+
+Go to **Monitors → New Monitor** (the form at the top of the page):
+
+### Step 1 — Basics
+
+| Field | Description |
+|---|---|
+| **Monitor name** | Human-readable label (e.g. `API health`) |
+| **URL** | The target URL to check (must include `http://` or `https://`) |
+| **Check type** | One of the types listed above |
+| **HTTP method** | `GET`, `POST`, `PUT`, `DELETE`, or `HEAD` (not available for Push) |
+| **Interval** | How often the check runs, in minutes (minimum: 1) |
+| **Timeout** | Request timeout in milliseconds (1 000 – 30 000 ms) |
+| **Auto-recovery TTL** | For Push monitors only: minutes before auto-resolving if no heartbeat arrives (0 to disable) |
+
+### Step 2 — Checks
+
+| Field | Description |
+|---|---|
+| **Degraded threshold** | Response time (ms) above which the monitor is marked degraded |
+| **Expected status** | HTTP status code to assert on (e.g. `200`) |
+| **Body must contain** | String that must appear in the response body |
+| **Body must not contain** | String that must not appear in the response body |
+| **Request headers** | One `Key: Value` header per line |
+| **Request body** | Raw body to send with the request (POST/PUT) |
+| **Response format** | `Auto`, `Text`, or `JSON` |
+| **Response assertion** | Path-based assertion for JSON responses (contains, equals, regex, JSON path) |
+| **Public** | Show this monitor on the public status page |
+
+## Monitor statuses
+
+| Status | Meaning |
+|---|---|
+| `up` | Last check passed |
+| `degraded` | Check passed but response time exceeded the degraded threshold |
+| `down` | Check failed (wrong status code, timeout, assertion failure, etc.) |
+| `pending` | No checks have run yet |
+
+## Push monitors
+
+Push monitors allow you to monitor services that can't be reached from outside (e.g. background jobs, crons). Your service pings a unique heartbeat URL; if Monitor doesn't receive a ping within the TTL window, the monitor is marked `down`.
+
+Heartbeat URL format:
+
+```
+GET /api/v1/push/{monitorId}?apiKey={apiKey}
+```
+
+<Tip>
+  Generate an API key in **Settings → API Keys** to authenticate push pings.
+</Tip>

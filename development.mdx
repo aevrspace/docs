@@ -1,94 +1,110 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: "Development"
+description: "Set up a local development environment and understand the project structure"
 ---
 
 <Info>
-  **Prerequisites**:
+  **Prerequisites**
   - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+  - MongoDB (local via [Docker](https://www.mongodb.com/docs/manual/installation/) or [Atlas](https://www.mongodb.com/atlas))
+  - A Resend API key for transactional email
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+## Running locally
 
-<Steps>
-<Step title="Install the Mintlify CLI">
-
-```bash
-npm i -g mint
-```
-</Step>
-
-<Step title="Preview locally">
-
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+Navigate to the `monitor-web` directory and start the dev server:
 
 ```bash
-mint dev
+cd monitor-web
+npm run dev
 ```
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+The application runs on **port 9100** by default:
 
-</Step>
-</Steps>
+```
+http://localhost:9100
+```
 
-## Custom ports
+## Environment variables
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+Create a `.env` file inside `monitor-web/` (copy `.env.example` if present). Required variables:
+
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `SESSION_SECRET` | Random secret used to sign cookies |
+| `RESEND_API_KEY` | [Resend](https://resend.com) API key for email delivery |
+| `NEXT_PUBLIC_APP_URL` | Public base URL of the app (used in generated links) |
+| `SMTP_HOST` / `SMTP_PORT` | SMTP fallback for email when Resend is unavailable |
+
+## Project structure
+
+```
+monitor-web/
+├── app/
+│   ├── (app)/            # Authenticated routes (dashboard, monitors, incidents…)
+│   ├── (auth)/           # Login, register, OTP verification
+│   ├── api/v1/           # REST API handlers (Next.js Route Handlers)
+│   └── status/           # Public status page routes
+├── components/           # React components (forms, sidebar, charts…)
+├── lib/
+│   ├── models/           # Mongoose models (Monitor, Incident, AlertChannel…)
+│   ├── mongodb.ts        # DB connection singleton
+│   └── auth-session.ts   # Session helpers
+├── utils/                # Shared utilities (HTTP client, formatters)
+└── scripts/              # Build-time scripts (OpenAPI generation)
+```
+
+## Generating the OpenAPI spec
+
+Monitor auto-generates an OpenAPI JSON spec from its route handlers at build time:
 
 ```bash
-mint dev --port 3333
+npm run openapi:generate
 ```
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
+The spec is written to `docs/api-reference/openapi.json` and used by the API Reference tab in these docs.
 
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
-
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
+It also runs automatically before every production build (`prebuild` hook):
 
 ```bash
-npm mint update
+npm run build
 ```
 
-## Validating links
+## Tech stack
 
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
+| Concern | Library |
+|---|---|
+| Framework | Next.js 16 with App Router |
+| UI components | Radix UI + shadcn/ui |
+| Styling | Tailwind CSS v4 |
+| Forms | Formik + Yup |
+| Database | MongoDB via Mongoose |
+| Email | Resend · Nodemailer (fallback) |
+| Charts | Recharts |
+| State | Zustand |
+
+## Linting
 
 ```bash
-mint broken-links
+npm run lint
 ```
-
-## Deployment
-
-If the deployment is successful, you should see the following:
-
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
-
-## Code formatting
-
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
+  <Accordion title="MongoDB connection errors on startup">
+    Ensure your `MONGODB_URI` is set correctly in `.env` and that your MongoDB instance is running. For Atlas, check that your IP is whitelisted.
   </Accordion>
 
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
+  <Accordion title="Emails not sending">
+    Verify `RESEND_API_KEY` is set and valid. If using SMTP fallback, confirm `SMTP_HOST` and `SMTP_PORT` are reachable from your machine.
+  </Accordion>
+
+  <Accordion title="Port 9100 already in use">
+    Change the port in `monitor-web/package.json` under the `"dev"` script:
+    ```json
+    "dev": "next dev -p YOUR_PORT"
+    ```
   </Accordion>
 </AccordionGroup>
-
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).

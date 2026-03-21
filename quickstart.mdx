@@ -1,80 +1,96 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Create your first monitor and status page in minutes"
 ---
 
-## Get started in three steps
+<Info>
+  **Prerequisites**
+  - Node.js version 19 or higher
+  - A running MongoDB instance (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
+  - A [Resend](https://resend.com) API key (or SMTP credentials) for email alerts
+</Info>
 
-Get your documentation site running locally and make your first customization.
+## Step 1: Clone and install
 
-### Step 1: Set up your local environment
+```bash
+git clone https://github.com/aevrHQ/monitor.git
+cd monitor/monitor-web
+npm install
+```
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Step 2: Configure environment variables
 
-### Step 2: Deploy your changes
+Copy the example env file and fill in your values:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+```bash
+cp .env.example .env
+```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+Key variables to set:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `SESSION_SECRET` | Long random string used to sign sessions |
+| `RESEND_API_KEY` | Resend API key for email alerts |
+| `NEXT_PUBLIC_APP_URL` | Public base URL (e.g. `http://localhost:9100`) |
 
-### Step 3: Go live
+## Step 3: Start the development server
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```bash
+npm run dev
+```
 
-## Next steps
+The app runs on **port 9100** by default. Open [http://localhost:9100](http://localhost:9100) in your browser.
 
-Now that you have your docs running, explore these key features:
+## Step 4: Create an account
+
+1. Go to [http://localhost:9100/register](http://localhost:9100/register).
+2. Enter your email address and a password.
+3. Verify your email via the OTP sent to your inbox.
+
+An organization is automatically created for your account on first sign-in.
+
+## Step 5: Create your first monitor
+
+1. In the sidebar, click **Monitors**.
+2. Fill in the monitor form:
+   - **Monitor name** — e.g. `API health`
+   - **URL** — e.g. `https://api.example.com/health`
+   - **Check type** — `Endpoint` (HTTP status check)
+   - **Interval** — `5` minutes
+3. Click **Next**, review the check settings, then click **Create Monitor**.
+
+<Tip>
+  Enable **Show on public status page** to surface monitor health on your organization's public status page at `/status/{slug}`.
+</Tip>
+
+## Step 6: Add an alert channel
+
+1. In the sidebar, click **Alerts**.
+2. Choose a channel type — Email, Slack, Discord, or Webhook.
+3. Fill in the required configuration and click **Add Channel**.
+
+Your team will now receive notifications when a monitor changes state.
+
+## Next Steps
 
 <CardGroup cols={2}>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
+<Card title="Monitors" icon="activity" href="/features/monitors">
+  Explore all check types and advanced configuration options.
 </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
+<Card title="Status Pages" icon="globe" href="/features/status-pages">
+  Customize and publish your public status page.
 </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
+<Card title="Incidents" icon="siren" href="/features/incidents">
+  Learn how to create and manage incidents.
 </Card>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
+<Card title="Alert Channels" icon="bell-ring" href="/features/alert-channels">
+  Configure Slack, Discord, and webhook notifications.
 </Card>
 
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

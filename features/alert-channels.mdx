@@ -1,0 +1,62 @@
+---
+title: "Alert Channels"
+description: "Get notified when your monitors change state"
+---
+
+Alert channels send notifications when a monitor transitions to `down`, `degraded`, or `up`. Each channel is configured per organization and can be attached to any number of monitors.
+
+## Supported channel types
+
+### Email
+
+Sends a plain-text email to one or more recipients via Resend (or SMTP fallback).
+
+**Configuration:**
+
+| Field | Description |
+|---|---|
+| **Recipient email** | The address that receives alert emails |
+
+### Slack
+
+Posts a message to a Slack channel via an Incoming Webhook.
+
+**Configuration:**
+
+| Field | Description |
+|---|---|
+| **Webhook URL** | Slack Incoming Webhook URL (`https://hooks.slack.com/...`) |
+
+### Discord
+
+Posts a message to a Discord channel via a server webhook.
+
+**Configuration:**
+
+| Field | Description |
+|---|---|
+| **Webhook URL** | Discord channel webhook URL |
+
+### Webhook
+
+Sends an HTTP request to any URL when an alert fires. Use this to integrate with PagerDuty, OpsGenie, or any custom receiver.
+
+**Configuration:**
+
+| Field | Description |
+|---|---|
+| **Webhook URL** | Target URL for the HTTP request |
+| **HTTP Method** | `POST`, `GET`, or `PUT` |
+
+## Adding an alert channel
+
+1. Navigate to **Alerts** in the sidebar.
+2. Enter a **Channel name** and choose a **Channel type**.
+3. Fill in the type-specific configuration.
+4. Click **Add Channel**.
+
+Once added, the channel is shown as an available option when creating or editing a monitor.
+
+<Note>
+  An alert channel must be **active** to appear in the monitor creation form. Inactive channels are excluded automatically.
+</Note>

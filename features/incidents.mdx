@@ -1,0 +1,39 @@
+---
+title: "Incidents"
+description: "Create, track, and resolve service incidents"
+---
+
+Incidents let you communicate service disruptions to your team and customers. Each incident has a timeline of status updates and can optionally be surfaced on the public status page.
+
+## Creating an incident
+
+1. Go to **Incidents** in the sidebar.
+2. Click **Create Incident**.
+3. Fill in the form:
+
+| Field | Description |
+|---|---|
+| **Incident name** | A short title (e.g. `Service Interruption`) |
+| **Affected monitor** | The monitor associated with this disruption |
+| **Initial status** | Starting state of the incident |
+| **Initial update message** | First timeline entry visible to users |
+| **Public** | Whether to show the incident on the public status page |
+
+## Incident statuses
+
+Monitor uses a standard progression to communicate the state of an incident:
+
+| Status | Meaning |
+|---|---|
+| `investigating` | The team is aware and investigating the root cause |
+| `identified` | The root cause has been identified; a fix is in progress |
+| `monitoring` | A fix has been deployed; the team is monitoring for stability |
+| `resolved` | The incident is fully resolved |
+
+## Adding timeline updates
+
+Open an existing incident and post a new update with a message and a status change. Each update is time-stamped and appended to the incident timeline, visible on the status page if the incident is public.
+
+## Resolving an incident
+
+Set the incident status to `resolved`. The incident is moved to the history view and removed from the active incidents count on the dashboard.

@@ -1,0 +1,45 @@
+---
+title: "API Keys"
+description: "Generate API keys for programmatic access and push monitors"
+---
+
+API keys allow services and scripts to interact with the Monitor API without a user session. They are required for **Push monitors** and can also be used for any authenticated API call.
+
+## Generating an API key
+
+1. Go to **Settings** in the sidebar.
+2. Scroll to the **API Keys** section.
+3. Click **Generate Key**, give it a name, and confirm.
+
+The key is shown once — copy it immediately and store it securely.
+
+<Warning>
+  API keys are only shown in full at creation time. If you lose a key, you must revoke it and generate a new one.
+</Warning>
+
+## Using an API key
+
+Pass the API key as a query parameter or HTTP header:
+
+```bash
+# Query parameter
+curl "https://monitor.aevr.space/api/v1/push/{monitorId}?apiKey=YOUR_KEY"
+
+# Authorization header
+curl -H "Authorization: Bearer YOUR_KEY" \
+  "https://monitor.aevr.space/api/v1/orgs/{orgId}/monitors"
+```
+
+## Push monitor heartbeats
+
+Push monitors require your application to periodically call the heartbeat endpoint:
+
+```
+GET /api/v1/push/{monitorId}?apiKey={apiKey}
+```
+
+If no ping is received within the monitor's configured TTL window, the monitor is marked `down` and your alert channels are triggered.
+
+## Revoking an API key
+
+In **Settings → API Keys**, click the delete icon next to a key to revoke it immediately. Any service relying on that key will lose access.

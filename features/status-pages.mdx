@@ -1,0 +1,41 @@
+---
+title: "Status Pages"
+description: "Publish a public-facing status page for your organization"
+---
+
+Each organization in Monitor has at least one public status page accessible at:
+
+```
+/status/{slug}
+```
+
+Teams and customers can visit this URL without logging in to see real-time service health.
+
+## Creating a status page
+
+1. Navigate to **Status Pages** in the sidebar.
+2. Enter a **Page name** (e.g. `Customer Status`) and a URL **Slug** (lowercase alphanumeric, hyphens only).
+3. Click **Add page**.
+
+The new status page is immediately live at `/status/{slug}`.
+
+## Adding monitors to a status page
+
+When creating or editing a monitor, enable the **Show this monitor on the public status page** checkbox. That monitor's status will then appear on all status pages associated with the organization.
+
+## Editing a status page
+
+Open a status page and click **Edit** to:
+
+- Rename the page
+- Change the slug
+- Choose which monitors are displayed
+- Toggle incident visibility
+
+## Incidents on the status page
+
+Incidents marked **public** automatically appear on the status page with their full timeline of updates, giving users transparency during outages.
+
+<Tip>
+  Your organization's default status page slug is derived from its name when first created. You can change it from the **Status Pages** section.
+</Tip>
