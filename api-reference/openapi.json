@@ -150,7 +150,12 @@
           },
           "role": {
             "type": "string",
-            "enum": ["owner", "admin", "member", "viewer"]
+            "enum": [
+              "owner",
+              "admin",
+              "member",
+              "viewer"
+            ]
           }
         }
       },
@@ -307,7 +312,10 @@
       },
       "MonitorInput": {
         "type": "object",
-        "required": ["name", "url"],
+        "required": [
+          "name",
+          "url"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -451,7 +459,10 @@
       },
       "AlertChannelInput": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": [
+          "name",
+          "type"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -537,7 +548,12 @@
           },
           "role": {
             "type": "string",
-            "enum": ["owner", "admin", "member", "viewer"]
+            "enum": [
+              "owner",
+              "admin",
+              "member",
+              "viewer"
+            ]
           },
           "joinedAt": {
             "type": "string",
@@ -959,18 +975,37 @@
     }
   },
   "paths": {
+    "/api/openapi.json": {
+      "get": {
+        "summary": "Get OpenAPI specification",
+        "description": "Returns the full OpenAPI 3.1.0 document for the platform.",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "OpenAPI JSON document"
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "summary": "Log in with email and password",
         "operationId": "authLogin",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1005,7 +1040,9 @@
       "post": {
         "summary": "Log out the current session",
         "operationId": "authLogout",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1025,14 +1062,18 @@
       "post": {
         "summary": "Request an email magic link",
         "operationId": "authMagicLinkRequest",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email"],
+                "required": [
+                  "email"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1063,7 +1104,9 @@
       "get": {
         "summary": "Verify a magic link and establish a session",
         "operationId": "authMagicLinkVerify",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "parameters": [
           {
             "in": "query",
@@ -1105,14 +1148,18 @@
       "post": {
         "summary": "Request a one-time password over email",
         "operationId": "authOtpRequest",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email"],
+                "required": [
+                  "email"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1140,14 +1187,19 @@
       "post": {
         "summary": "Verify a one-time password",
         "operationId": "authOtpVerify",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "otp"],
+                "required": [
+                  "email",
+                  "otp"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1181,14 +1233,19 @@
       "post": {
         "summary": "Register a new account",
         "operationId": "authRegister",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1235,7 +1292,9 @@
       "get": {
         "summary": "Fetch the current authenticated session",
         "operationId": "authSession",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1258,7 +1317,9 @@
       "patch": {
         "summary": "Update an alert channel",
         "operationId": "updateAlertChannel",
-        "tags": ["Alert Channels"],
+        "tags": [
+          "Alert Channels"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1307,7 +1368,9 @@
       "delete": {
         "summary": "Delete an alert channel",
         "operationId": "deleteAlertChannel",
-        "tags": ["Alert Channels"],
+        "tags": [
+          "Alert Channels"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1348,7 +1411,9 @@
       "post": {
         "summary": "Test an alert channel",
         "operationId": "testAlertChannel",
-        "tags": ["Alert Channels"],
+        "tags": [
+          "Alert Channels"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1389,7 +1454,9 @@
       "get": {
         "summary": "List alert channels",
         "operationId": "listAlertChannels",
-        "tags": ["Alert Channels"],
+        "tags": [
+          "Alert Channels"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1420,7 +1487,9 @@
       "post": {
         "summary": "Create an alert channel",
         "operationId": "createAlertChannel",
-        "tags": ["Alert Channels"],
+        "tags": [
+          "Alert Channels"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1463,7 +1532,9 @@
       "delete": {
         "summary": "Revoke an organization API key",
         "operationId": "revokeApiKey",
-        "tags": ["API Keys"],
+        "tags": [
+          "API Keys"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1498,7 +1569,9 @@
       "get": {
         "summary": "List organization API keys",
         "operationId": "listApiKeys",
-        "tags": ["API Keys"],
+        "tags": [
+          "API Keys"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1523,7 +1596,9 @@
       "post": {
         "summary": "Create an organization API key",
         "operationId": "createApiKey",
-        "tags": ["API Keys"],
+        "tags": [
+          "API Keys"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1556,11 +1631,128 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/incidents/{incidentId}": {
+      "patch": {
+        "summary": "Update an incident",
+        "description": "Update status or add a threaded message to an incident.",
+        "operationId": "updateIncident",
+        "tags": [
+          "Incidents"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "incidentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "investigating",
+                      "identified",
+                      "monitoring",
+                      "resolved"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Incident updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an incident",
+        "operationId": "deleteIncident",
+        "tags": [
+          "Incidents"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "incidentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident deleted"
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/incidents": {
       "get": {
-        "summary": "List incidents for an organization",
-        "operationId": "listOrgIncidents",
-        "tags": ["Incidents"],
+        "summary": "List organization incidents",
+        "operationId": "listIncidents",
+        "tags": [
+          "Incidents"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1584,7 +1776,73 @@
         ],
         "responses": {
           "200": {
-            "description": "Incident collection"
+            "description": "Incidents loaded"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a manual incident",
+        "operationId": "createIncident",
+        "tags": [
+          "Incidents"
+        ],
+        "security": [
+          {
+            "sessionCookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "monitorId": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "investigating",
+                      "identified",
+                      "monitoring",
+                      "resolved"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Incident created"
           }
         }
       }
@@ -1593,7 +1851,9 @@
       "get": {
         "summary": "Get the active organization invite",
         "operationId": "getOrganizationInvite",
-        "tags": ["Invites"],
+        "tags": [
+          "Invites"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1618,7 +1878,9 @@
       "post": {
         "summary": "Create or rotate an organization invite",
         "operationId": "createOrganizationInvite",
-        "tags": ["Invites"],
+        "tags": [
+          "Invites"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1645,7 +1907,9 @@
       "get": {
         "summary": "List organization members",
         "operationId": "listOrgMembers",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1670,7 +1934,9 @@
       "patch": {
         "summary": "Update a member role",
         "operationId": "updateOrgMemberRole",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1692,14 +1958,22 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["userId", "role"],
+                "required": [
+                  "userId",
+                  "role"
+                ],
                 "properties": {
                   "userId": {
                     "type": "string"
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["owner", "admin", "member", "viewer"]
+                    "enum": [
+                      "owner",
+                      "admin",
+                      "member",
+                      "viewer"
+                    ]
                   }
                 }
               }
@@ -1717,7 +1991,9 @@
       "post": {
         "summary": "Run a monitor check immediately",
         "operationId": "runMonitorCheck",
-        "tags": ["Monitors"],
+        "tags": [
+          "Monitors"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1756,7 +2032,9 @@
       "patch": {
         "summary": "Update a monitor",
         "operationId": "updateMonitor",
-        "tags": ["Monitors"],
+        "tags": [
+          "Monitors"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1805,7 +2083,9 @@
       "delete": {
         "summary": "Delete a monitor",
         "operationId": "deleteMonitor",
-        "tags": ["Monitors"],
+        "tags": [
+          "Monitors"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1846,7 +2126,9 @@
       "get": {
         "summary": "List monitors in an organization",
         "operationId": "listOrgMonitors",
-        "tags": ["Monitors"],
+        "tags": [
+          "Monitors"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1877,7 +2159,9 @@
       "post": {
         "summary": "Create a new monitor",
         "operationId": "createOrgMonitor",
-        "tags": ["Monitors"],
+        "tags": [
+          "Monitors"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1920,7 +2204,9 @@
       "patch": {
         "summary": "Update legacy status page settings",
         "operationId": "updateStatusPage",
-        "tags": ["Status Page"],
+        "tags": [
+          "Status Page"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -1963,7 +2249,9 @@
       "patch": {
         "summary": "Update a status page",
         "operationId": "updateStatusPageV2",
-        "tags": ["Status Page"],
+        "tags": [
+          "Status Page"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2012,7 +2300,9 @@
       "delete": {
         "summary": "Delete a status page",
         "operationId": "deleteStatusPage",
-        "tags": ["Status Page"],
+        "tags": [
+          "Status Page"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2053,7 +2343,9 @@
       "get": {
         "summary": "List organization status pages",
         "operationId": "listStatusPages",
-        "tags": ["Status Page"],
+        "tags": [
+          "Status Page"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2084,7 +2376,9 @@
       "post": {
         "summary": "Create a status page",
         "operationId": "createStatusPage",
-        "tags": ["Status Page"],
+        "tags": [
+          "Status Page"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2127,7 +2421,9 @@
       "post": {
         "summary": "Set the active organization in the session",
         "operationId": "setActiveOrganization",
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2139,7 +2435,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["orgSlug"],
+                "required": [
+                  "orgSlug"
+                ],
                 "properties": {
                   "orgSlug": {
                     "type": "string"
@@ -2163,7 +2461,9 @@
       "post": {
         "summary": "Join an organization with an invite token",
         "operationId": "joinOrganization",
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2196,7 +2496,9 @@
       "get": {
         "summary": "List organizations for the current user",
         "operationId": "listOrganizations",
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2216,7 +2518,9 @@
       "post": {
         "summary": "Retry a KYC verification session",
         "operationId": "retryPayIdKycSession",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2246,7 +2550,9 @@
       "get": {
         "summary": "Get a specific KYC session status",
         "operationId": "getPayIdKycSessionStatus",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2276,7 +2582,9 @@
       "get": {
         "summary": "Get the current user's KYC status",
         "operationId": "getPayIdKycStatus",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2296,7 +2604,9 @@
       "post": {
         "summary": "Start or submit a KYC verification flow",
         "operationId": "verifyPayIdKyc",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2326,7 +2636,9 @@
       "post": {
         "summary": "Start the PayID OAuth flow",
         "operationId": "initiatePayIdOAuth",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "responses": {
           "200": {
             "description": "OAuth initiation successful"
@@ -2341,7 +2653,9 @@
       "post": {
         "summary": "Request a PayID OAuth magic link",
         "operationId": "requestPayIdOauthMagicLink",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2372,7 +2686,9 @@
       "post": {
         "summary": "Refresh a PayID OAuth token",
         "operationId": "refreshPayIdOauthToken",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2392,7 +2708,9 @@
       "get": {
         "summary": "Fetch PayID user information",
         "operationId": "getPayIdUserInfo",
-        "tags": ["PayID"],
+        "tags": [
+          "PayID"
+        ],
         "security": [
           {
             "authTokenHeader": []
@@ -2408,11 +2726,66 @@
         }
       }
     },
+    "/api/v1/push/{token}": {
+      "post": {
+        "summary": "Push a status update for a monitor",
+        "description": "Report a status event ('ok' or 'error') for a push-type monitor.",
+        "operationId": "pushMonitorEvent",
+        "tags": [
+          "Monitors"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ok",
+                      "error"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          },
+          "404": {
+            "description": "Invalid push token"
+          }
+        }
+      }
+    },
     "/api/v1/system/cron/uptime": {
       "post": {
         "summary": "Run due monitor checks",
         "operationId": "runDueMonitorChecks",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "security": [
           {
             "cronSecretHeader": []
@@ -2438,7 +2811,9 @@
       "post": {
         "summary": "Report a client-side error to the backend",
         "operationId": "reportClientError",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2460,7 +2835,9 @@
       "get": {
         "summary": "List referrals for the current user",
         "operationId": "listUserReferrals",
-        "tags": ["User"],
+        "tags": [
+          "User"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2475,7 +2852,9 @@
       "post": {
         "summary": "Save a referral code or relationship for the current user",
         "operationId": "saveUserReferral",
-        "tags": ["User"],
+        "tags": [
+          "User"
+        ],
         "security": [
           {
             "sessionCookieAuth": []
@@ -2502,6 +2881,204 @@
         "responses": {
           "200": {
             "description": "Referral saved"
+          }
+        }
+      }
+    },
+    "/badges/monitor/{monitorId}": {
+      "get": {
+        "summary": "Get a monitor uptime badge",
+        "description": "Returns an SVG badge showing the status or uptime of a specific monitor.",
+        "tags": [
+          "Badges"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "monitorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "uptime",
+                "status"
+              ],
+              "default": "uptime"
+            }
+          },
+          {
+            "in": "query",
+            "name": "range",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "90d"
+              ],
+              "default": "30d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG image",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/badges/status/{statusPageSlug}": {
+      "get": {
+        "summary": "Get a status page overall badge",
+        "description": "Returns an SVG badge showing the status or uptime of all monitors on a status page.",
+        "tags": [
+          "Badges"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusPageSlug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "uptime",
+                "status"
+              ],
+              "default": "uptime"
+            }
+          },
+          {
+            "in": "query",
+            "name": "range",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "90d"
+              ],
+              "default": "30d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG image",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/callback/payid": {
+      "get": {
+        "summary": "PayID OAuth callback",
+        "description": "Handles the redirect back from PayID OAuth provider.",
+        "tags": [
+          "Auth",
+          "PayID"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to dashboard on success or error page on failure."
+          }
+        }
+      }
+    },
+    "/join/{inviteToken}": {
+      "get": {
+        "summary": "Join organization via invite link",
+        "description": "Validates an invite token and adds the current user to the organization.",
+        "tags": [
+          "Organizations",
+          "Invites"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inviteToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to login if unauthenticated, or dashboard on success."
+          }
+        }
+      }
+    },
+    "/r/{payTag}": {
+      "get": {
+        "summary": "Referral redirect",
+        "description": "Tracks a referral from a user's PayTag and redirects to registration.",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payTag",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to registration page."
           }
         }
       }
